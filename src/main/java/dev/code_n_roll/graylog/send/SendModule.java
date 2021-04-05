@@ -4,6 +4,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import org.graylog2.gelfclient.GelfConfiguration;
 import org.graylog2.gelfclient.GelfTransports;
+import org.graylog2.gelfclient.transport.GelfTransport;
 
 public class SendModule extends AbstractModule {
 
@@ -14,17 +15,24 @@ public class SendModule extends AbstractModule {
 
   @Provides
   static GelfConfiguration provideGelfConfiguration() {
-	return new GelfConfiguration(9000)
+	return new GelfConfiguration()
+		.maxInflightSends(10)
 		.transport(GelfTransports.UDP)
 		.queueSize(QUEUE_SIZE)
 		.connectTimeout(CONNECT_TIMEOUT_MS)
 		.reconnectDelay(RECONNECT_DELAY_MS)
 		.tcpNoDelay(true)
-		.sendBufferSize(SEND_BUFFER_SIZE_BYTE);
+		.sendBufferSize(SEND_BUFFER_SIZE_BYTE)
+		.disableTls();
   }
 
   @Provides
-  static GraylogClient provideGraylogClient(GelfConfiguration gelfConfiguration) {
-	return new GraylogClient(gelfConfiguration);
+  static GelfTransport provideGelfTransport(GelfConfiguration gelfConfiguration) {
+	return GelfTransports.create(gelfConfiguration);
+  }
+
+  @Provides
+  static GraylogClient provideGraylogClient(GelfTransport gelfTransport) {
+	return new GraylogClient(gelfTransport);
   }
 }

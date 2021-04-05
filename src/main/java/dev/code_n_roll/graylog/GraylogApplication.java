@@ -26,7 +26,10 @@ public class GraylogApplication {
 
   public void start() {
 	LOG.info("Starting application.");
-	List<RequestMessage> messages = messageParser.parseMessageFile();
+	List<RequestMessage> messages = this.messageParser.parseMessageFile();
 	LOG.info("Parsed {} messages.", messages.size());
+	messages.forEach(this.graylogClient::sendMessage);
+	this.graylogClient.flush();
+	LOG.info("Finished sending messages to Graylog server.");
   }
 }

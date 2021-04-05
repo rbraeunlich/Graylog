@@ -12,17 +12,17 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public class RequestMessage {
   private final String clientDeviceType;
-  private final String clientIP; // TODO use IP class
+  private final String clientIP;
   private final String clientIPClass;
-  private final String clientStatus; // TODO use HTTPStatus class
+  private final String clientStatus;
   private final Long clientRequestBytes;
   private final String clientRequestReferer;
   private final String clientRequestURI;
   private final String clientRequestUserAgent;
   private final Integer clientSrcPort;
-  private final String edgeServerIP; // TODO use IP class
+  private final String edgeServerIP;
   private final Long edgeStartTimestamp;
-  private final String destinationIP; // TODO use IP class
+  private final String destinationIP;
   private final Long originResponseBytes;
   private final Long originResponseTime;
 
