@@ -29,7 +29,6 @@ public class GraylogApplication {
 	List<RequestMessage> messages = this.messageParser.parseMessageFile();
 	LOG.info("Parsed {} messages.", messages.size());
 	messages.forEach(this.graylogClient::sendMessage);
-	this.graylogClient.flush();
 	LOG.info("Finished sending messages to Graylog server.");
   }
 }

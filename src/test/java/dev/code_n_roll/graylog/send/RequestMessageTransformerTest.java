@@ -1,9 +1,11 @@
 package dev.code_n_roll.graylog.send;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.code_n_roll.graylog.parse.RequestMessage;
-import org.graylog2.gelfclient.GelfMessage;
-import org.graylog2.gelfclient.GelfMessageBuilder;
-import org.graylog2.gelfclient.GelfMessageLevel;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
@@ -11,9 +13,9 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 class RequestMessageTransformerTest {
 
   @Test
-  void shouldTransformMessageProperly(){
+  void shouldTransformMessageProperly() {
 	RequestMessage requestMessage = message();
-	GelfMessage gelfMessage = RequestMessageTransformer.transform(requestMessage);
+	ObjectNode gelfMessage = RequestMessageTransformer.transform(requestMessage);
 
 	assertThat(gelfMessage)
 		.usingRecursiveComparison()
@@ -40,23 +42,25 @@ class RequestMessageTransformerTest {
 	);
   }
 
-  private GelfMessage expectedMessage(RequestMessage requestMessage) {
-    return 	new GelfMessageBuilder("", "example.com")
-		.level(GelfMessageLevel.INFO)
-		.additionalField("_ClientDeviceType", requestMessage.getClientDeviceType())
-		.additionalField("_ClientIP", requestMessage.getClientIP())
-		.additionalField("_ClientIPClass", requestMessage.getClientIPClass())
-		.additionalField("_ClientStatus", requestMessage.getClientStatus())
-		.additionalField("_ClientRequestBytes", requestMessage.getClientRequestBytes())
-		.additionalField("_ClientRequestReferer", requestMessage.getClientRequestReferer())
-		.additionalField("_ClientRequestURI", requestMessage.getClientRequestURI())
-		.additionalField("_ClientRequestUserAgent", requestMessage.getClientRequestUserAgent())
-		.additionalField("_ClientSrcPort", requestMessage.getClientSrcPort())
-		.additionalField("_EdgeServerIP", requestMessage.getEdgeServerIP())
-		.additionalField("_EdgeStartTimestamp", requestMessage.getEdgeStartTimestamp())
-		.additionalField("_DestinationIP", requestMessage.getDestinationIP())
-		.additionalField("_OriginResponseBytes", requestMessage.getOriginResponseBytes())
-		.additionalField("_OriginResponseTime", requestMessage.getOriginResponseTime())
-		.build();
+  private ObjectNode expectedMessage(RequestMessage requestMessage) {
+	Map<String, Object> message = new HashMap<>();
+	message.put("version", "1.1");
+	message.put("host", "example.com");
+	message.put("short_message", "Graylog client message");
+	message.put("_ClientDeviceType", requestMessage.getClientDeviceType());
+	message.put("_ClientIP", requestMessage.getClientIP());
+	message.put("_ClientIPClass", requestMessage.getClientIPClass());
+	message.put("_ClientStatus", requestMessage.getClientStatus());
+	message.put("_ClientRequestBytes", requestMessage.getClientRequestBytes());
+	message.put("_ClientRequestReferer", requestMessage.getClientRequestReferer());
+	message.put("_ClientRequestURI", requestMessage.getClientRequestURI());
+	message.put("_ClientRequestUserAgent", requestMessage.getClientRequestUserAgent());
+	message.put("_ClientSrcPort", requestMessage.getClientSrcPort());
+	message.put("_EdgeServerIP", requestMessage.getEdgeServerIP());
+	message.put("_EdgeStartTimestamp", requestMessage.getEdgeStartTimestamp());
+	message.put("_DestinationIP", requestMessage.getDestinationIP());
+	message.put("_OriginResponseBytes", requestMessage.getOriginResponseBytes());
+	message.put("_OriginResponseTime", requestMessage.getOriginResponseTime());
+	return new JsonMapper().valueToTree(message);
   }
 }

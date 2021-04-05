@@ -1,14 +1,18 @@
 package dev.code_n_roll.graylog.send;
 
-import java.util.concurrent.TimeUnit;
+import java.io.IOException;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.code_n_roll.graylog.parse.RequestMessage;
-import org.graylog2.gelfclient.GelfConfiguration;
-import org.graylog2.gelfclient.GelfMessage;
-import org.graylog2.gelfclient.GelfMessageBuilder;
-import org.graylog2.gelfclient.GelfMessageLevel;
-import org.graylog2.gelfclient.GelfTransports;
-import org.graylog2.gelfclient.transport.GelfTransport;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,24 +20,43 @@ public class GraylogClient {
 
   private static final Logger LOG = LoggerFactory.getLogger(GraylogClient.class);
 
-  private final GelfTransport transport;
+  private static final ObjectMapper OBJECT_MAPPER = new JsonMapper();
 
-  public GraylogClient(GelfTransport gelfTransport) {
-	this.transport = gelfTransport;
+  private static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
+
+  private static final String GRAYLOG_SERVER_GELF_HTTP_INPUT_URL = "http://127.0.0.1:12201/gelf";
+
+  private final OkHttpClient httpClient;
+
+  public GraylogClient(OkHttpClient httpClient) {
+	this.httpClient = httpClient;
   }
 
   public void sendMessage(RequestMessage requestMessage) {
-	GelfMessage message = RequestMessageTransformer.transform(requestMessage);
+	ObjectNode message = RequestMessageTransformer.transform(requestMessage);
 	try {
 	  LOG.debug("Sending message to Graylog server.");
-	  this.transport.send(message);
-	} catch (InterruptedException ex) {
+	  Request request = createRequest(message);
+	  performRequest(request);
+	} catch (Exception ex) {
 	  LOG.error("Couldn't send message to Graylog server.", ex);
 	}
   }
 
-  public void flush() {
-	LOG.info("Flushing messages to Graylog server.");
-	this.transport.flushAndStopSynchronously(10, TimeUnit.SECONDS, 1);
+  private Request createRequest(ObjectNode message) throws JsonProcessingException {
+	return new Request.Builder()
+		.url(GRAYLOG_SERVER_GELF_HTTP_INPUT_URL)
+		.post(RequestBody.create(OBJECT_MAPPER.writeValueAsString(message), JSON))
+		.build();
+  }
+
+  private void performRequest(Request request) throws IOException {
+	try (Response response = this.httpClient.newCall(request).execute()) {
+	  if (response.isSuccessful()) {
+		LOG.debug("Received success response code {} from server.", response.code());
+	  } else {
+		LOG.error("Received error response code {} from server.", response.code());
+	  }
+	}
   }
 }
