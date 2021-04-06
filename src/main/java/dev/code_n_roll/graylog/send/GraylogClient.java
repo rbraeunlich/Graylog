@@ -12,7 +12,6 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,12 +23,12 @@ public class GraylogClient {
 
   private static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
 
-  private static final String GRAYLOG_SERVER_GELF_HTTP_INPUT_URL = "http://127.0.0.1:12201/gelf";
-
   private final OkHttpClient httpClient;
+  private final String graylogServerGelfHttpInputUrl;
 
-  public GraylogClient(OkHttpClient httpClient) {
+  public GraylogClient(OkHttpClient httpClient, String graylogServerGelfHttpInputUrl) {
 	this.httpClient = httpClient;
+	this.graylogServerGelfHttpInputUrl = graylogServerGelfHttpInputUrl;
   }
 
   public void sendMessage(RequestMessage requestMessage) {
@@ -45,7 +44,7 @@ public class GraylogClient {
 
   private Request createRequest(ObjectNode message) throws JsonProcessingException {
 	return new Request.Builder()
-		.url(GRAYLOG_SERVER_GELF_HTTP_INPUT_URL)
+		.url(this.graylogServerGelfHttpInputUrl)
 		.post(RequestBody.create(OBJECT_MAPPER.writeValueAsString(message), JSON))
 		.build();
   }
